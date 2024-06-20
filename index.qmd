@@ -1,0 +1,177 @@
+---
+title: "Taylor Swift Track 5 Analysis"
+subtitle: "Is track 5 really the saddest song on each Taylor Swift album?"
+author: "Ivy Spratt"
+execute:
+  echo: FALSE
+  message: FALSE
+  warning: FALSE
+---
+
+Made by Taylor Swift fans and validated by Swift herself, there is a well known theory that track 5 of each Taylor Swift album is the saddest song on it. To put that to the test, this data compare's the average valence (a factor made by Spotify that determines the level of musical positiveness within a song) of track 5 versus track 1 of each album. *On a scale of 0-1.0, the higher the valence, the higher the overall positiveness.* 
+
+
+
+```{r}
+#loading the packages
+library(tidyverse)
+library(dplyr)
+library(gridExtra)
+```
+
+```{r}
+#loading the csv file
+x <- read_csv("taylor_swift_spotify.csv", show_col_types = FALSE)
+```
+
+```{r}
+#establishing the track 5 order for plot arrangement
+track_5_order <- c(
+  "Cold As You",
+  "White Horse (Taylor’s Version)",
+  "Dear John (Taylor's Version)",
+  "All Too Well (Taylor's Version)",
+  "All You Had To Do Was Stay (Taylor's Version)",
+  "Delicate",
+  "The Archer",
+  "my tears ricochet",
+  "tolerate it",
+  "You're On Your Own, Kid",
+  "So Long, London"
+  )
+```
+
+```{r}
+#establishing the track 1 order for plot arrangement
+track_1_order <- c(
+  "Tim McGraw",
+  "Fearless (Taylor’s Version)",
+  "Mine (Taylor's Version)",
+  "State Of Grace (Taylor's Version)",
+  "Welcome To New York (Taylor's Version)",
+  "...Ready For It?",
+  "I Forgot That You Existed",
+  "the 1",
+  "willow",
+  "Lavender Haze",
+  "Fortnight (feat. Post Malone)"
+  )
+```
+
+
+```{r}
+#setting the point colors
+album_colors <- c(
+  "Taylor Swift" = "aquamarine",                   
+  "Fearless (Taylor's Version)" = "lightgoldenrod",    
+  "Speak Now (Taylor's Version)" = "purple2",   
+  "Red (Taylor's Version)" = "red3",         
+  "1989 (Taylor's Version) [Deluxe]" = "lightblue2",
+  "reputation" = "black",                     
+  "Lover" = "#e377c2",                          
+  "folklore" = "grey77",                       
+  "evermore (deluxe version)" = "chocolate3",       
+  "Midnights (The Til Dawn Edition)" = "midnightblue",
+  "THE TORTURED POETS DEPARTMENT: THE ANTHOLOGY"= "grey31" 
+)
+```
+
+
+```{r}
+#making sure my tears ricochet is an included data point
+my_tears_ricochet <- x%>%
+  filter(name == "my tears ricochet" & album == "folklore")
+```
+
+```{r}
+#making sure the one is an included data point
+the_one <- x%>%
+  filter(name == "the 1" & album == "folklore")
+```
+
+
+```{r}
+#filtered data for plot_1
+x_filtered1 <- x%>%
+  filter(!album %in% c("folklore: the long pond studio sessions (from the Disney+ special) [deluxe edition]", "Speak Now World Tour Live", "Live From Clear Channel Stripped 2008", "1989 (Deluxe)", "Fearless (Platinum Edition)", "Speak Now", "reputation Stadium Tour Suprise Song Playlist", "Speak Now (Deluxe Package)", "1989"))%>%
+  filter(!(name == "Holy Ground"))
+```
+
+```{r}
+#filtered data for plot_2
+x_filtered2 <- x%>%
+  filter(!album %in% c("folklore: the long pond studio sessions (from the Disney+ special) [deluxe edition]", "Speak Now World Tour Live", "Live From Clear Channel Stripped 2008", "1989 (Deluxe)", "Fearless (Platinum Edition)", "Speak Now", "reputation Stadium Tour Suprise Song Playlist", "Speak Now (Deluxe Package)", "1989", "folklore (deluxe edition)"))%>%
+  filter(!(name == "All Too Well"))
+```
+
+
+```{r}
+#data for plot_1
+x_unique1 <- bind_rows(my_tears_ricochet, x_filtered1)%>%
+  distinct(name, .keep_all = TRUE)
+```
+
+```{r}
+#data for plot_2
+x_unique2 <- bind_rows(the_one, x_filtered2)%>%
+  distinct(name, .keep_all = TRUE)
+```
+
+```{r}
+#median line for plot_1
+median_valence1 <- median(x_unique1$valence[x_unique1$track_number == 5], na.rm = TRUE)
+```
+
+```{r}
+#median line for plot_2
+median_valence2 <- median(x_unique2$valence[x_unique2$track_number == 1], na.rm = TRUE)
+```
+
+
+```{r}
+#establishing the y axis limits
+y_limits <- c(0, 1.0)
+```
+
+
+```{r}
+#track 5 plot
+plot_1 <- x_unique1 |> mutate(name = factor(name, levels = track_5_order)) |> arrange(name) |> filter(track_number == 5) |> 
+  ggplot(mapping = aes(x = name, y = valence, color = album))+
+  geom_point(size = 5)+
+  geom_hline(yintercept = median_valence1, linetype = "dashed", color = "red")+
+  scale_color_manual(values = album_colors)+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1),
+        panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray80"))+
+  guides(color = FALSE)+
+  labs(title = "Track 5",
+       x = "",
+       y = "")+
+  ylim(y_limits)
+```
+
+```{r}
+#track 1 plot
+plot_2 <- x_unique2 |> mutate(name = factor(name, levels =track_1_order)) |> arrange(name) |> filter(track_number == 1) |> 
+  ggplot(mapping = aes(x = name, y = valence, color = album))+
+  geom_point(size = 5)+
+  geom_hline(yintercept = median_valence2, linetype = "dashed", color = "red")+
+  scale_color_manual(values = album_colors)+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1),
+        panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray80"))+
+  guides(color = FALSE)+
+  labs(title = "Track 1",
+       x = "",
+       y = "")+
+  ylim(y_limits)
+
+```
+
+```{r}
+# arranging the grids next to each other
+grid.arrange(plot_1, plot_2, ncol = 2)
+```
+
+As displayed, when compared to the opening tracks of each Swift album, track 5 has a lower median 

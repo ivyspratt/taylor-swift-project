@@ -2,3 +2,11 @@
 .Rhistory
 .RData
 .Ruserdata
+
+*Rproj
+/.quarto/
+
+_site/
+styles.css
+index.knit.md
+_quarto.yml
